@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Impact Comparison Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #222536;
+      --border: #2e3250;
+      --accent: #4f7df7;
+      --accent2: #34d399;
+      --accent3: #f97316;
+      --text: #e2e8f0;
+      --text-muted: #8892b0;
+      --bear: #4f7df7;
+      --jackson: #34d399;
+      --arcadia: #f97316;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1a1d27 0%, #0f1117 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #4f7df7, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p { color: var(--text-muted); font-size: 0.875rem; margin-top: 2px; }
+    .badge {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Layout ── */
+    .main { padding: 24px 32px; max-width: 1600px; margin: 0 auto; }
+
+    /* ── Project Cards ── */
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+    @media (max-width: 900px) { .cards { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .card.bear::before  { background: var(--bear); }
+    .card.jackson::before { background: var(--jackson); }
+    .card.arcadia::before { background: var(--arcadia); }
+    .card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 2px; }
+    .card .location { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 14px; }
+    .card .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .stat label { display: block; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+    .stat .val { font-size: 1.25rem; font-weight: 700; }
+    .stat .sub { font-size: 0.7rem; color: var(--text-muted); }
+    .stat .val.bear-col { color: var(--bear); }
+    .stat .val.jackson-col { color: var(--jackson); }
+    .stat .val.arcadia-col { color: var(--arcadia); }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+    .tab {
+      padding: 10px 18px;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      border: none;
+      background: none;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      margin-bottom: -1px;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Charts ── */
+    .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 1100px) { .chart-grid { grid-template-columns: 1fr; } }
+    .chart-grid.single { grid-template-columns: 1fr; }
+
+    .chart-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .chart-box h4 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .chart-box p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    .chart-box canvas { max-height: 320px; }
+
+    /* ── Market filter ── */
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .filter-btn {
+      padding: 4px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* ── Summary table ── */
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .summary-table th {
+      text-align: left;
+      padding: 10px 14px;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border);
+    }
+    .summary-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .summary-table tr:last-child td { border-bottom: none; }
+    .summary-table tr:hover td { background: var(--surface2); }
+    .dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    /* ── Method comparison bar ── */
+    .method-bar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    .method-bar span { display: flex; align-items: center; gap: 4px; }
+    .method-swatch { width: 12px; height: 12px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Project Impact Comparison Dashboard</h1>
+    <p>Solar carbon reduction analysis — WattTime MOER vs TCR LMER methodology</p>
+  </div>
+  <span class="badge">40-year projection · 3 projects</span>
+</header>
+
+<div class="main">
+
+  <!-- ── Project Summary Cards ── -->
+  <div class="cards">
+    <div class="card bear">
+      <h3>SR CL Bear Creek</h3>
+      <div class="location">📍 Bear Creek, Alabama &nbsp;·&nbsp; Alabama Power (SOCO)</div>
+      <div class="stats">
+        <div class="stat">
+          <label>Capacity</label>
+          <div class="val bear-col">6,066 kW</div>
+          <div class="sub">DC nameplate</div>
+        </div>
+        <div class="stat">
+          <label>Total MWh (40 yr)</label>
+          <div class="val bear-col">383,731</div>
+          <div class="sub">MWh produced</div>
+        </div>
+        <div class="stat">
+          <label>CO₂ Avoided (MOER)</label>
+          <div class="val bear-col">211,034 t</div>
+          <div class="sub">WattTime method</div>
+        </div>
+        <div class="stat">
+          <label>CO₂ Avoided (TCR)</label>
+          <div class="val bear-col">222,441 t</div>
+          <div class="sub">TCR LMER method</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card jackson">
+      <h3>SR CL Jackson</h3>
+      <div class="location">📍 Jackson, Tennessee &nbsp;·&nbsp; TVA</div>
+      <div class="stats">
+        <div class="stat">
+          <label>Capacity</label>
+          <div class="val jackson-col">1,420 kW</div>
+          <div class="sub">DC nameplate</div>
+        </div>
+        <div class="stat">
+          <label>Total MWh (40 yr)</label>
+          <div class="val jackson-col">90,403</div>
+          <div class="sub">MWh produced</div>
+        </div>
+        <div class="stat">
+          <label>CO₂ Avoided (MOER)</label>
+          <div class="val jackson-col">47,228 t</div>
+          <div class="sub">WattTime method</div>
+        </div>
+        <div class="stat">
+          <label>CO₂ Avoided (TCR)</label>
+          <div class="val jackson-col">51,447 t</div>
+          <div class="sub">TCR LMER method</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card arcadia">
+      <h3>SR CL Arcadia South</h3>
+      <div class="location">📍 Arcadia, Louisiana &nbsp;·&nbsp; Entergy (MISO)</div>
+      <div class="stats">
+        <div class="stat">
+          <label>Capacity</label>
+          <div class="val arcadia-col">6,080 kW</div>
+          <div class="sub">DC nameplate</div>
+        </div>
+        <div class="stat">
+          <label>Total MWh (40 yr)</label>
+          <div class="val arcadia-col">398,917</div>
+          <div class="sub">MWh produced</div>
+        </div>
+        <div class="stat">
+          <label>CO₂ Avoided (MOER)</label>
+          <div class="val arcadia-col">246,044 t</div>
+          <div class="sub">WattTime method</div>
+        </div>
+        <div class="stat">
+          <label>CO₂ Avoided (TCR)</label>
+          <div class="val arcadia-col">200,118 t</div>
+          <div class="sub">TCR LMER method</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Tabs ── -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('production')">MWh Production</button>
+    <button class="tab" onclick="switchTab('carbon')">Carbon Reduction</button>
+    <button class="tab" onclick="switchTab('lmer')">LMER Trends</button>
+    <button class="tab" onclick="switchTab('market')">Market LMER</button>
+    <button class="tab" onclick="switchTab('summary')">Data Table</button>
+  </div>
+
+  <!-- ── Tab: Production ── -->
+  <div id="tab-production" class="tab-panel active">
+    <div class="chart-grid">
+      <div class="chart-box">
+        <h4>Annual MWh Production (All Projects)</h4>
+        <p>Energy output over 40-year project lifetime with 0.3% annual degradation</p>
+        <canvas id="mwhChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h4>Capacity Factor Trend</h4>
+        <p>Percentage of maximum theoretical production remaining each year</p>
+        <canvas id="cfChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Tab: Carbon ── -->
+  <div id="tab-carbon" class="tab-panel">
+    <div class="chart-grid">
+      <div class="chart-box">
+        <h4>Annual CO₂ Avoided — Bear Creek</h4>
+        <p>WattTime MOER vs TCR LMER methodology comparison (metric tons CO₂)</p>
+        <canvas id="carbonBearChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h4>Annual CO₂ Avoided — Jackson</h4>
+        <p>WattTime MOER vs TCR LMER methodology comparison (metric tons CO₂)</p>
+        <canvas id="carbonJacksonChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h4>Annual CO₂ Avoided — Arcadia South</h4>
+        <p>WattTime MOER vs TCR LMER methodology comparison (metric tons CO₂)</p>
+        <canvas id="carbonArcadiaChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h4>Cumulative CO₂ Avoided (All Projects)</h4>
+        <p>Running total of avoided emissions using TCR LMER method (metric tons CO₂)</p>
+        <canvas id="carbonCumChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Tab: LMER ── -->
+  <div id="tab-lmer" class="tab-panel">
+    <div class="chart-grid">
+      <div class="chart-box">
+        <h4>TCR LMER Rate by Year (per MWh basis)</h4>
+        <p>Marginal emissions rate (metric tons CO₂/MWh) used for TCR carbon accounting</p>
+        <canvas id="lmerRateChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h4>TCR LMER % of Initial Value</h4>
+        <p>How each project's local LMER changes relative to Year 1 baseline</p>
+        <canvas id="lmerPctChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Tab: Market ── -->
+  <div id="tab-market" class="tab-panel">
+    <div class="chart-box" style="margin-bottom: 20px;">
+      <h4>Avg Implied PV LMER by Market (2026–2045)</h4>
+      <p>Annual average implied PV LMER (metric tons CO₂/MWh) — toggle markets below</p>
+      <div class="filter-bar" id="marketFilters"></div>
+      <canvas id="marketChart" style="max-height: 380px;"></canvas>
+    </div>
+  </div>
+
+  <!-- ── Tab: Data Table ── -->
+  <div id="tab-summary" class="tab-panel">
+    <div class="chart-box">
+      <h4>Project Summary Comparison</h4>
+      <p>Key metrics side by side across all three projects</p>
+      <table class="summary-table" style="margin-top:12px;">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th><span class="dot" style="background:var(--bear)"></span>Bear Creek</th>
+            <th><span class="dot" style="background:var(--jackson)"></span>Jackson</th>
+            <th><span class="dot" style="background:var(--arcadia)"></span>Arcadia South</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Grid / Utility</td><td>Alabama Power (SOCO)</td><td>TVA</td><td>Entergy (MISO)</td></tr>
+          <tr><td>State</td><td>Alabama</td><td>Tennessee</td><td>Louisiana</td></tr>
+          <tr><td>Capacity (DC)</td><td>6,066 kW</td><td>1,420 kW</td><td>6,080 kW</td></tr>
+          <tr><td>MOER (lbs CO₂/MWh, 2025)</td><td>1,212.6</td><td>1,151.9</td><td>1,360.0</td></tr>
+          <tr><td>Year 1 Generation (MWh/MW)</td><td>1,676</td><td>1,687</td><td>1,736</td></tr>
+          <tr><td>Total MWh (40 yr)</td><td>383,731</td><td>90,403</td><td>398,917</td></tr>
+          <tr><td>CO₂ Avoided — WattTime MOER (t)</td><td>211,034</td><td>47,228</td><td>246,044</td></tr>
+          <tr><td>CO₂ Avoided — TCR LMER/MW (t)</td><td>222,441</td><td>51,447</td><td>200,118</td></tr>
+          <tr><td>TCR vs MOER ratio</td><td>+5.4%</td><td>+8.9%</td><td>−18.7%</td></tr>
+          <tr><td>Degradation Factor (annual)</td><td>0.3%</td><td>0.3%</td><td>0.3%</td></tr>
+          <tr><td>Avg % Max Production (40 yr)</td><td>93.85%</td><td>93.85%</td><td>93.85%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="chart-box" style="margin-top: 20px;">
+      <h4>Annual Data — All Projects</h4>
+      <p>Select a project to view year-by-year breakdown</p>
+      <div class="filter-bar" id="tableFilter">
+        <button class="filter-btn on" onclick="showTable('bear')">Bear Creek</button>
+        <button class="filter-btn" onclick="showTable('jackson')">Jackson</button>
+        <button class="filter-btn" onclick="showTable('arcadia')">Arcadia South</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="summary-table" id="annualTable" style="min-width:700px;margin-top:8px;"></table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end .main -->
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────
+const YEARS = Array.from({length:40}, (_,i)=>i+1);
+const COLORS = { bear: '#4f7df7', jackson: '#34d399', arcadia: '#f97316' };
+
+const DATA = {
+  bear_creek: {
+    name: 'Bear Creek', color: COLORS.bear,
+    mwh:       [10166,10135.5,10105.1,10074.78,10044.56,10014.42,9984.38,9954.43,9924.56,9894.79,9865.1,9835.51,9806.0,9776.58,9747.25,9718.01,9688.86,9659.79,9630.81,9601.92,9573.11,9544.4,9515.76,9487.22,9458.75,9430.38,9402.09,9373.88,9345.76,9317.72,9289.77,9261.9,9234.11,9206.41,9178.79,9151.25,9123.8,9096.43,9069.14,9041.93],
+    pct_max:   [99.7,99.4,99.1,98.8,98.5,98.2,97.9,97.6,97.3,97.0,96.7,96.4,96.1,95.8,95.5,95.2,94.9,94.6,94.3,94.0,93.7,93.4,93.1,92.8,92.5,92.2,91.9,91.6,91.3,91.0,90.7,90.4,90.1,89.8,89.5,89.2,88.9,88.6,88.3,88.0],
+    co2_moer:  [5590.83,5574.06,5557.34,5540.67,5524.05,5507.47,5490.95,5474.48,5458.06,5441.68,5425.36,5409.08,5392.85,5376.67,5360.54,5344.46,5328.43,5312.44,5296.51,5280.62,5264.77,5249.0,5233.23,5217.53,5201.88,5186.28,5170.72,5155.2,5139.74,5124.32,5108.95,5093.62,5078.34,5063.1,5047.91,5032.77,5017.67,5002.62,4987.61,4972.65],
+    co2_tcr:   [6496.55,6663.34,6775.42,6594.43,6420.67,6449.2,6476.43,6245.34,6363.38,6075.52,5710.72,5640.45,5502.19,5429.23,5280.27,5466.93,5244.92,5301.99,5296.41,5301.68,5244.74,5234.14,5224.97,5216.89,5209.68,5203.16,5197.22,5191.76,5186.71,5182.01,5177.62,5173.5,5169.62,5165.95,5162.47,5159.17,5156.02,5153.01,5150.13,5147.37],
+    lmer_mwh:  [0.5255,0.5404,0.5517,0.5312,0.5171,0.5193,0.5215,0.5055,0.5151,0.4894,0.4575,0.4521,0.4412,0.4363,0.4231,0.4368,0.4189,0.4241,0.4249,0.4261,0.4242,0.4234,0.4226,0.422,0.4214,0.4209,0.4204,0.42,0.4195,0.4192,0.4188,0.4185,0.4182,0.4179,0.4176,0.4173,0.4171,0.4168,0.4166,0.4164],
+    pct_lmer:  [100,102.57,104.29,101.51,98.83,99.27,99.69,96.13,97.95,93.52,87.9,86.82,84.69,83.57,81.28,84.15,80.73,81.61,81.53,81.61,80.73,80.57,80.43,80.3,80.19,80.09,79.97,79.92,79.84,79.77,79.7,79.63,79.57,79.52,79.46,79.41,79.37,79.32,79.27,79.23]
+  },
+  jackson: {
+    name: 'Jackson', color: COLORS.jackson,
+    mwh:       [2395,2387.82,2380.65,2373.51,2366.39,2359.29,2352.21,2345.16,2338.12,2331.11,2324.11,2317.14,2310.19,2303.26,2296.35,2289.46,2282.59,2275.74,2268.92,2262.11,2255.32,2248.56,2241.81,2235.09,2228.38,2221.7,2215.03,2208.39,2201.76,2195.15,2188.57,2182.0,2175.46,2168.93,2162.42,2155.94,2149.47,2143.02,2136.59,2130.18],
+    pct_max:   [99.7,99.4,99.1,98.8,98.5,98.2,97.9,97.6,97.3,97.0,96.7,96.4,96.1,95.8,95.5,95.2,94.9,94.6,94.3,94.0,93.7,93.4,93.1,92.8,92.5,92.2,91.9,91.6,91.3,91.0,90.7,90.4,90.1,89.8,89.5,89.2,88.9,88.6,88.3,88.0],
+    co2_moer:  [1251.19,1247.43,1243.69,1239.96,1236.24,1232.53,1228.84,1225.15,1221.47,1217.81,1214.16,1210.51,1206.88,1203.26,1199.65,1196.05,1192.46,1188.89,1185.32,1181.76,1178.22,1174.68,1171.16,1167.65,1164.14,1160.65,1157.17,1153.7,1150.24,1146.79,1143.35,1139.92,1136.5,1133.09,1129.69,1126.3,1122.92,1119.55,1116.19,1112.84],
+    co2_tcr:   [1534.49,1540.04,1515.35,1509.32,1525.32,1451.05,1469.81,1412.99,1411.03,1364.79,1302.6,1296.56,1273.35,1243.41,1222.55,1273.72,1219.08,1236.93,1232.16,1237.47,1223.03,1220.48,1218.28,1216.34,1214.6,1213.04,1211.61,1210.3,1209.09,1207.96,1206.9,1205.92,1204.98,1204.1,1203.27,1202.47,1201.72,1200.99,1200.3,1199.64],
+    lmer_mwh:  [0.5632,0.5654,0.5591,0.5346,0.54,0.5136,0.5201,0.5018,0.5013,0.4834,0.4604,0.4592,0.4515,0.4416,0.4333,0.4509,0.4315,0.4381,0.4374,0.4397,0.4489,0.4479,0.4471,0.4464,0.4458,0.4452,0.4447,0.4442,0.4438,0.4433,0.443,0.4426,0.4422,0.4419,0.4416,0.4413,0.441,0.4408,0.4405,0.4403],
+    pct_lmer:  [100,100.36,98.75,98.36,99.4,94.56,95.78,92.08,91.95,88.94,84.88,84.49,82.98,81.03,79.67,83.01,79.45,80.61,80.3,80.64,79.7,79.54,78.93,79.27,79.15,79.05,78.96,78.87,78.79,78.72,78.65,78.59,78.52,78.47,78.41,78.37,78.31,78.27,78.22,78.18]
+  },
+  arcadia: {
+    name: 'Arcadia South', color: COLORS.arcadia,
+    mwh:       [10568.32,10536.62,10505.01,10473.49,10442.07,10410.74,10379.51,10348.37,10317.33,10286.38,10255.52,10224.75,10194.08,10163.49,10133.0,10102.6,10072.3,10042.08,10011.95,9981.92,9951.97,9922.12,9892.35,9862.67,9833.08,9803.58,9774.17,9744.85,9715.62,9686.47,9657.41,9628.44,9599.55,9570.75,9542.04,9513.42,9484.88,9456.42,9428.05,9399.77],
+    pct_max:   [99.7,99.4,99.1,98.8,98.5,98.2,97.9,97.6,97.3,97.0,96.7,96.4,96.1,95.8,95.5,95.2,94.9,94.6,94.3,94.0,93.7,93.4,93.1,92.8,92.5,92.2,91.9,91.6,91.3,91.0,90.7,90.4,90.1,89.8,89.5,89.2,88.9,88.6,88.3,88.0],
+    co2_moer:  [6518.33,6498.77,6479.28,6459.84,6440.46,6421.14,6401.88,6382.67,6363.52,6344.43,6325.4,6306.42,6287.5,6268.64,6249.83,6231.08,6212.39,6193.75,6175.17,6156.65,6138.18,6119.76,6101.4,6083.1,6064.85,6046.66,6028.52,6010.43,5992.4,5974.42,5956.5,5938.63,5920.81,5903.05,5885.34,5867.69,5850.08,5832.53,5815.03,5797.59],
+    co2_tcr:   [6257.43,6338.47,6169.26,5756.94,5550.4,5153.47,4644.72,4516.16,4954.68,4852.3,4905.24,4592.54,4517.47,4584.53,4679.38,4763.6,4840.56,4757.43,4887.89,4887.79,4890.05,4896.3,4901.72,4906.51,4910.79,4914.67,4918.21,4921.47,4924.5,4927.31,4929.95,4932.42,4934.76,4936.97,4939.07,4941.06,4942.97,4944.79,4946.53,4948.21],
+    lmer_mwh:  [0.5013,0.5052,0.4867,0.4558,0.4408,0.4121,0.3748,0.3642,0.395,0.3897,0.3925,0.3691,0.3681,0.3699,0.3774,0.3835,0.3906,0.3822,0.3907,0.3898,0.3917,0.3922,0.3927,0.3931,0.3934,0.3937,0.394,0.3943,0.3945,0.3947,0.3949,0.3951,0.3953,0.3955,0.3957,0.3958,0.396,0.3961,0.3963,0.3964],
+    pct_lmer:  [100,100.78,98.59,92.0,87.87,82.36,74.22,72.17,79.18,77.55,78.39,73.39,72.19,73.27,74.78,76.13,77.36,76.03,78.11,78.11,78.15,78.25,78.33,78.41,78.47,78.54,78.6,78.65,78.7,78.74,78.79,78.83,78.86,78.9,78.93,78.96,78.99,79.02,79.05,79.07]
+  }
+};
+
+const MARKET_COLORS = {
+  ERCOT:'#f97316', ISONE:'#4f7df7', MISO:'#34d399', NYISO:'#a855f7',
+  PJM:'#ec4899', SOCO:'#facc15', SPP:'#06b6d4', TVA:'#f43f5e', Southeast:'#84cc16'
+};
+
+const LMER_YEARS = [2026,2027,2028,2029,2030,2031,2032,2033,2034,2035,2036,2037,2038,2039,2040,2041,2042,2043,2044,2045];
+const LMER_MARKETS = {
+  ERCOT:    [0.4662,0.3641,0.3406,0.2957,0.2693,0.3084,0.3283,0.3584,0.3159,0.3178,0.3122,0.3146,0.3151,0.3123,0.2943,0.3005,0.3085,0.2846,0.2881,0.2868],
+  ISONE:    [0.4546,0.4524,0.4508,0.4465,0.4462,0.4462,0.4538,0.4469,0.4447,0.4361,0.4523,0.4428,0.4359,0.4258,0.4229,null,null,null,null,null],
+  MISO:     [0.6694,0.6471,0.6207,0.5938,0.5496,0.5379,0.5114,0.5006,0.5041,0.4944,0.4627,0.4405,0.423,0.4156,0.4227,0.4188,0.4092,0.4112,0.4046,0.4023],
+  NYISO:    [0.4413,0.3847,0.3253,0.3493,0.3499,0.3551,0.3473,0.3276,0.3278,0.3182,0.2955,0.2568,0.2478,0.2353,0.2161,null,null,null,null,null],
+  PJM:      [0.5551,0.5465,0.5685,0.5676,0.569,0.5665,0.5543,0.5327,0.5211,0.5058,0.4879,0.4921,0.4802,0.4759,0.4818,0.47,0.4746,0.4764,0.4735,0.4687],
+  SOCO:     [0.5255,0.5404,0.5517,0.5312,0.5171,0.5193,0.5215,0.5055,0.5151,0.4894,0.4575,0.4521,0.4412,0.4363,0.4231,0.4368,0.4189,0.4241,0.4249,0.4261],
+  SPP:      [0.6066,0.5949,0.5859,0.5462,0.5364,0.5304,0.5315,0.5312,0.5407,0.5307,0.5346,0.531,0.5306,0.5337,0.5416,0.5372,0.539,0.5544,0.5552,0.5509],
+  TVA:      [0.5632,0.5654,0.5591,0.5346,0.54,0.5136,0.5201,0.5018,0.5013,0.4834,0.4604,0.4592,0.4515,0.4416,0.4333,0.4509,0.4315,0.4381,0.4374,0.4397],
+  Southeast:[0.5056,0.5042,0.5104,0.4946,0.4881,0.491,0.4969,0.4878,0.4897,0.4712,0.449,0.4463,0.4363,0.4331,0.4176,0.4282,0.4131,0.4161,0.4126,0.4102]
+};
+
+// ── Chart defaults ──────────────────────────────────────────────────────────
+Chart.defaults.color = '#8892b0';
+Chart.defaults.borderColor = '#2e3250';
+Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+Chart.defaults.font.size = 11;
+
+function lineOpts(yLabel='', stepped=false) {
+  return {
+    responsive:true, maintainAspectRatio:true,
+    interaction:{mode:'index', intersect:false},
+    plugins:{
+      legend:{position:'bottom', labels:{usePointStyle:true, pointStyleWidth:8, padding:16}},
+      tooltip:{
+        backgroundColor:'#1a1d27', borderColor:'#2e3250', borderWidth:1,
+        titleColor:'#e2e8f0', bodyColor:'#8892b0', padding:10
+      }
+    },
+    scales:{
+      x:{title:{display:true, text:'Project Year', color:'#8892b0'}, ticks:{maxTicksLimit:10}},
+      y:{title:{display:!!yLabel, text:yLabel, color:'#8892b0'}, grid:{color:'#2e3250'}}
+    }
+  };
+}
+
+function mkDataset(label, data, color, fill=false, dashed=false) {
+  return {
+    label, data,
+    borderColor: color,
+    backgroundColor: fill ? color+'33' : color+'00',
+    borderWidth: 2,
+    borderDash: dashed ? [5,4] : [],
+    pointRadius: 0, pointHoverRadius: 4,
+    tension: 0.3, fill
+  };
+}
+
+// ── CHART 1: MWh Production ─────────────────────────────────────────────────
+new Chart(document.getElementById('mwhChart'), {
+  type:'line',
+  data:{
+    labels: YEARS,
+    datasets:[
+      mkDataset('Bear Creek', DATA.bear_creek.mwh, COLORS.bear),
+      mkDataset('Jackson', DATA.jackson.mwh, COLORS.jackson),
+      mkDataset('Arcadia South', DATA.arcadia.mwh, COLORS.arcadia)
+    ]
+  },
+  options: lineOpts('Annual MWh')
+});
+
+// ── CHART 2: Capacity Factor ─────────────────────────────────────────────────
+new Chart(document.getElementById('cfChart'), {
+  type:'line',
+  data:{
+    labels: YEARS,
+    datasets:[
+      mkDataset('Bear Creek', DATA.bear_creek.pct_max, COLORS.bear),
+      mkDataset('Jackson', DATA.jackson.pct_max, COLORS.jackson),
+      mkDataset('Arcadia South', DATA.arcadia.pct_max, COLORS.arcadia)
+    ]
+  },
+  options:{...lineOpts('% of Max Production'), scales:{...lineOpts().scales, y:{...lineOpts().scales.y, min:85, max:101}}}
+});
+
+// ── CHARTS 3-5: Carbon per project ──────────────────────────────────────────
+function makeCarbonChart(id, proj) {
+  new Chart(document.getElementById(id), {
+    type:'line',
+    data:{
+      labels: YEARS,
+      datasets:[
+        mkDataset('WattTime MOER', proj.co2_moer, proj.color, false, false),
+        mkDataset('TCR LMER', proj.co2_tcr, proj.color, false, true)
+      ]
+    },
+    options: lineOpts('t CO₂ avoided')
+  });
+}
+makeCarbonChart('carbonBearChart', DATA.bear_creek);
+makeCarbonChart('carbonJacksonChart', DATA.jackson);
+makeCarbonChart('carbonArcadiaChart', DATA.arcadia);
+
+// ── CHART 6: Cumulative CO₂ ─────────────────────────────────────────────────
+function cumSum(arr) { let s=0; return arr.map(v=>Math.round((s+=v)*10)/10); }
+new Chart(document.getElementById('carbonCumChart'), {
+  type:'line',
+  data:{
+    labels: YEARS,
+    datasets:[
+      mkDataset('Bear Creek (TCR)', DATA.bear_creek.co2_tcr.map((_,i,a)=>a.slice(0,i+1).reduce((s,v)=>s+v,0)/1000|0), COLORS.bear, true),
+      mkDataset('Jackson (TCR)', DATA.jackson.co2_tcr.map((_,i,a)=>a.slice(0,i+1).reduce((s,v)=>s+v,0)/1000|0), COLORS.jackson, true),
+      mkDataset('Arcadia (TCR)', DATA.arcadia.co2_tcr.map((_,i,a)=>a.slice(0,i+1).reduce((s,v)=>s+v,0)/1000|0), COLORS.arcadia, true),
+    ]
+  },
+  options: lineOpts('Cumulative kt CO₂')
+});
+
+// ── CHART 7: LMER Rate ───────────────────────────────────────────────────────
+new Chart(document.getElementById('lmerRateChart'), {
+  type:'line',
+  data:{
+    labels: YEARS,
+    datasets:[
+      mkDataset('Bear Creek (SOCO)', DATA.bear_creek.lmer_mwh, COLORS.bear),
+      mkDataset('Jackson (TVA)', DATA.jackson.lmer_mwh, COLORS.jackson),
+      mkDataset('Arcadia South (MISO)', DATA.arcadia.lmer_mwh, COLORS.arcadia)
+    ]
+  },
+  options: lineOpts('t CO₂/MWh')
+});
+
+// ── CHART 8: LMER % ──────────────────────────────────────────────────────────
+new Chart(document.getElementById('lmerPctChart'), {
+  type:'line',
+  data:{
+    labels: YEARS,
+    datasets:[
+      mkDataset('Bear Creek', DATA.bear_creek.pct_lmer, COLORS.bear),
+      mkDataset('Jackson', DATA.jackson.pct_lmer, COLORS.jackson),
+      mkDataset('Arcadia South', DATA.arcadia.pct_lmer, COLORS.arcadia)
+    ]
+  },
+  options:{...lineOpts('% of Year 1 LMER')}
+});
+
+// ── CHART 9: Market LMER ─────────────────────────────────────────────────────
+const marketOrder = Object.keys(LMER_MARKETS);
+let activeMarkets = new Set(['ERCOT','MISO','PJM','SOCO','TVA']);
+let marketChart;
+
+function buildMarketChart() {
+  const ds = marketOrder.filter(m=>activeMarkets.has(m)).map(m=>({
+    label: m,
+    data: LMER_MARKETS[m],
+    borderColor: MARKET_COLORS[m] || '#94a3b8',
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    pointRadius: 3, pointHoverRadius: 5,
+    tension: 0.3,
+    spanGaps: true
+  }));
+
+  if (marketChart) marketChart.destroy();
+  marketChart = new Chart(document.getElementById('marketChart'), {
+    type:'line',
+    data:{ labels: LMER_YEARS, datasets: ds },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index', intersect:false},
+      plugins:{
+        legend:{position:'bottom', labels:{usePointStyle:true, pointStyleWidth:8, padding:14}},
+        tooltip:{backgroundColor:'#1a1d27', borderColor:'#2e3250', borderWidth:1, titleColor:'#e2e8f0', bodyColor:'#8892b0', padding:10}
+      },
+      scales:{
+        x:{title:{display:true, text:'Year', color:'#8892b0'}},
+        y:{title:{display:true, text:'Avg Implied PV LMER (t CO₂/MWh)', color:'#8892b0'}, grid:{color:'#2e3250'}}
+      }
+    }
+  });
+}
+
+// Build market filter buttons
+const filterEl = document.getElementById('marketFilters');
+marketOrder.forEach(m => {
+  const btn = document.createElement('button');
+  btn.className = 'filter-btn' + (activeMarkets.has(m) ? ' on' : '');
+  btn.textContent = m;
+  btn.onclick = () => {
+    if (activeMarkets.has(m)) { activeMarkets.delete(m); btn.classList.remove('on'); }
+    else { activeMarkets.add(m); btn.classList.add('on'); }
+    buildMarketChart();
+  };
+  filterEl.appendChild(btn);
+});
+buildMarketChart();
+
+// ── Tab Switching ────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── Annual Table ─────────────────────────────────────────────────────────────
+const TABLE_HEADERS = ['Year','MWh Produced','% Max Prod','CO₂ MOER (t)','CO₂ TCR/MW (t)','LMER (t CO₂/MWh)','% Initial LMER'];
+const TABLE_KEYS    = ['mwh','pct_max','co2_moer','co2_tcr','lmer_mwh','pct_lmer'];
+
+function showTable(key) {
+  document.querySelectorAll('#tableFilter .filter-btn').forEach(b=>b.classList.remove('on'));
+  event.target.classList.add('on');
+  const proj = DATA[key === 'bear' ? 'bear_creek' : key === 'jackson' ? 'jackson' : 'arcadia'];
+  const tbl = document.getElementById('annualTable');
+  const fmt = (v, k) => {
+    if (k==='mwh') return v.toLocaleString(undefined,{maximumFractionDigits:0});
+    if (k==='pct_max'||k==='pct_lmer') return v.toFixed(1)+'%';
+    if (k==='co2_moer'||k==='co2_tcr') return v.toLocaleString(undefined,{maximumFractionDigits:0});
+    if (k==='lmer_mwh') return v.toFixed(4);
+    return v;
+  };
+  tbl.innerHTML = `
+    <thead><tr>${['Year',...TABLE_KEYS.map((_,i)=>TABLE_HEADERS[i+1])].map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+    <tbody>${YEARS.map((yr,i)=>`
+      <tr>
+        <td><strong>${yr}</strong></td>
+        ${TABLE_KEYS.map(k=>`<td>${fmt(proj[k][i], k)}</td>`).join('')}
+      </tr>`).join('')}
+    </tbody>`;
+}
+showTable('bear');
+</script>
+</body>
+</html>
