@@ -295,16 +295,11 @@
 
   <!-- ── Tab: Production ── -->
   <div id="tab-production" class="tab-panel active">
-    <div class="chart-grid">
+    <div class="chart-grid single">
       <div class="chart-box">
         <h4>Annual MWh Production (All Projects)</h4>
         <p>Energy output over 40-year project lifetime with 0.3% annual degradation</p>
         <canvas id="mwhChart"></canvas>
-      </div>
-      <div class="chart-box">
-        <h4>Capacity Factor Trend</h4>
-        <p>Percentage of maximum theoretical production remaining each year</p>
-        <canvas id="cfChart"></canvas>
       </div>
     </div>
   </div>
@@ -339,9 +334,19 @@
   <div id="tab-lmer" class="tab-panel">
     <div class="chart-grid">
       <div class="chart-box">
-        <h4>Emission Rate Comparison: TCR LMER (MWh) vs WattTime MOER</h4>
-        <p>TCR LMER (MWh) rate (solid) vs WattTime MOER rate (dashed) in metric tons CO₂/MWh — same color per project</p>
-        <canvas id="lmerRateChart"></canvas>
+        <h4>Bear Creek — Emission Rate Comparison</h4>
+        <p>WattTime MOER (solid gray) vs TCR LMER MWh rate (dotted) in metric tons CO₂/MWh</p>
+        <canvas id="lmerRateBearChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h4>Jackson — Emission Rate Comparison</h4>
+        <p>WattTime MOER (solid gray) vs TCR LMER MWh rate (dotted) in metric tons CO₂/MWh</p>
+        <canvas id="lmerRateJacksonChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h4>Arcadia South — Emission Rate Comparison</h4>
+        <p>WattTime MOER (solid gray) vs TCR LMER MWh rate (dotted) in metric tons CO₂/MWh</p>
+        <canvas id="lmerRateArcadiaChart"></canvas>
       </div>
       <div class="chart-box">
         <h4>TCR LMER % of Initial Value</h4>
@@ -410,7 +415,7 @@
 <script>
 // ── DATA ──────────────────────────────────────────────────────────────────
 const YEARS = Array.from({length:40}, (_,i)=>i+1);
-const COLORS = { bear: '#4f7df7', jackson: '#34d399', arcadia: '#f97316' };
+const COLORS = { bear: '#4f7df7', jackson: '#34d399', arcadia: '#f97316', moer: '#94a3b8' };
 
 const DATA = {
   bear_creek: {
@@ -487,13 +492,13 @@ function lineOpts(yLabel='', stepped=false) {
   };
 }
 
-function mkDataset(label, data, color, fill=false, dashed=false) {
+function mkDataset(label, data, color, fill=false, dotted=false) {
   return {
     label, data,
     borderColor: color,
     backgroundColor: fill ? color+'33' : color+'00',
     borderWidth: 2,
-    borderDash: dashed ? [5,4] : [],
+    borderDash: dotted ? [3,4] : [],
     pointRadius: 0, pointHoverRadius: 4,
     tension: 0.3, fill
   };
@@ -513,19 +518,6 @@ new Chart(document.getElementById('mwhChart'), {
   options: lineOpts('Annual MWh')
 });
 
-// ── CHART 2: Capacity Factor ─────────────────────────────────────────────────
-new Chart(document.getElementById('cfChart'), {
-  type:'line',
-  data:{
-    labels: YEARS,
-    datasets:[
-      mkDataset('Bear Creek', DATA.bear_creek.pct_max, COLORS.bear),
-      mkDataset('Jackson', DATA.jackson.pct_max, COLORS.jackson),
-      mkDataset('Arcadia South', DATA.arcadia.pct_max, COLORS.arcadia)
-    ]
-  },
-  options:{...lineOpts('% of Max Production'), scales:{...lineOpts().scales, y:{...lineOpts().scales.y, min:85, max:101}}}
-});
 
 // ── CHARTS 3-5: Carbon per project ──────────────────────────────────────────
 function makeCarbonChart(id, proj) {
@@ -534,7 +526,7 @@ function makeCarbonChart(id, proj) {
     data:{
       labels: YEARS,
       datasets:[
-        mkDataset('WattTime MOER', proj.co2_moer, proj.color, false, false),
+        mkDataset('WattTime MOER', proj.co2_moer, COLORS.moer, false, false),
         mkDataset('TCR LMER (MWh)', proj.co2_tcr, proj.color, false, true)
       ]
     },
@@ -560,22 +552,23 @@ new Chart(document.getElementById('carbonCumChart'), {
   options: lineOpts('Cumulative kt CO₂')
 });
 
-// ── CHART 7: LMER Rate vs MOER Rate ──────────────────────────────────────────
-new Chart(document.getElementById('lmerRateChart'), {
-  type:'line',
-  data:{
-    labels: YEARS,
-    datasets:[
-      mkDataset('Bear Creek TCR LMER (MWh)', DATA.bear_creek.lmer_mwh, COLORS.bear, false, false),
-      mkDataset('Bear Creek WattTime MOER', Array(40).fill(DATA.bear_creek.moer_rate), COLORS.bear, false, true),
-      mkDataset('Jackson TCR LMER (MWh)', DATA.jackson.lmer_mwh, COLORS.jackson, false, false),
-      mkDataset('Jackson WattTime MOER', Array(40).fill(DATA.jackson.moer_rate), COLORS.jackson, false, true),
-      mkDataset('Arcadia South TCR LMER (MWh)', DATA.arcadia.lmer_mwh, COLORS.arcadia, false, false),
-      mkDataset('Arcadia South WattTime MOER', Array(40).fill(DATA.arcadia.moer_rate), COLORS.arcadia, false, true)
-    ]
-  },
-  options: lineOpts('t CO₂/MWh')
-});
+// ── CHARTS 7a-7c: LMER Rate vs MOER Rate (one per project) ───────────────────
+function makeLmerRateChart(id, proj) {
+  new Chart(document.getElementById(id), {
+    type:'line',
+    data:{
+      labels: YEARS,
+      datasets:[
+        mkDataset('WattTime MOER', Array(40).fill(proj.moer_rate), COLORS.moer, false, false),
+        mkDataset('TCR LMER (MWh)', proj.lmer_mwh, proj.color, false, true)
+      ]
+    },
+    options: lineOpts('t CO₂/MWh')
+  });
+}
+makeLmerRateChart('lmerRateBearChart',    DATA.bear_creek);
+makeLmerRateChart('lmerRateJacksonChart', DATA.jackson);
+makeLmerRateChart('lmerRateArcadiaChart', DATA.arcadia);
 
 // ── CHART 8: LMER % ──────────────────────────────────────────────────────────
 new Chart(document.getElementById('lmerPctChart'), {
