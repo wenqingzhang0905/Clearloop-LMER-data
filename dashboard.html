@@ -295,16 +295,11 @@
 
   <!-- ── Tab: Production ── -->
   <div id="tab-production" class="tab-panel active">
-    <div class="chart-grid">
+    <div class="chart-grid single">
       <div class="chart-box">
         <h4>Annual MWh Production (All Projects)</h4>
         <p>Energy output over 40-year project lifetime with 0.3% annual degradation</p>
         <canvas id="mwhChart"></canvas>
-      </div>
-      <div class="chart-box">
-        <h4>Capacity Factor Trend</h4>
-        <p>Percentage of maximum theoretical production remaining each year</p>
-        <canvas id="cfChart"></canvas>
       </div>
     </div>
   </div>
@@ -487,13 +482,13 @@ function lineOpts(yLabel='', stepped=false) {
   };
 }
 
-function mkDataset(label, data, color, fill=false, dashed=false) {
+function mkDataset(label, data, color, fill=false, dotted=false) {
   return {
     label, data,
     borderColor: color,
     backgroundColor: fill ? color+'33' : color+'00',
     borderWidth: 2,
-    borderDash: dashed ? [5,4] : [],
+    borderDash: dotted ? [3,4] : [],
     pointRadius: 0, pointHoverRadius: 4,
     tension: 0.3, fill
   };
@@ -513,19 +508,6 @@ new Chart(document.getElementById('mwhChart'), {
   options: lineOpts('Annual MWh')
 });
 
-// ── CHART 2: Capacity Factor ─────────────────────────────────────────────────
-new Chart(document.getElementById('cfChart'), {
-  type:'line',
-  data:{
-    labels: YEARS,
-    datasets:[
-      mkDataset('Bear Creek', DATA.bear_creek.pct_max, COLORS.bear),
-      mkDataset('Jackson', DATA.jackson.pct_max, COLORS.jackson),
-      mkDataset('Arcadia South', DATA.arcadia.pct_max, COLORS.arcadia)
-    ]
-  },
-  options:{...lineOpts('% of Max Production'), scales:{...lineOpts().scales, y:{...lineOpts().scales.y, min:85, max:101}}}
-});
 
 // ── CHARTS 3-5: Carbon per project ──────────────────────────────────────────
 function makeCarbonChart(id, proj) {
@@ -566,12 +548,12 @@ new Chart(document.getElementById('lmerRateChart'), {
   data:{
     labels: YEARS,
     datasets:[
-      mkDataset('Bear Creek TCR LMER (MWh)', DATA.bear_creek.lmer_mwh, COLORS.bear, false, false),
-      mkDataset('Bear Creek WattTime MOER', Array(40).fill(DATA.bear_creek.moer_rate), COLORS.bear, false, true),
-      mkDataset('Jackson TCR LMER (MWh)', DATA.jackson.lmer_mwh, COLORS.jackson, false, false),
-      mkDataset('Jackson WattTime MOER', Array(40).fill(DATA.jackson.moer_rate), COLORS.jackson, false, true),
-      mkDataset('Arcadia South TCR LMER (MWh)', DATA.arcadia.lmer_mwh, COLORS.arcadia, false, false),
-      mkDataset('Arcadia South WattTime MOER', Array(40).fill(DATA.arcadia.moer_rate), COLORS.arcadia, false, true)
+      mkDataset('Bear Creek WattTime MOER', Array(40).fill(DATA.bear_creek.moer_rate), COLORS.bear, false, false),
+      mkDataset('Bear Creek TCR LMER (MWh)', DATA.bear_creek.lmer_mwh, COLORS.bear, false, true),
+      mkDataset('Jackson WattTime MOER', Array(40).fill(DATA.jackson.moer_rate), COLORS.jackson, false, false),
+      mkDataset('Jackson TCR LMER (MWh)', DATA.jackson.lmer_mwh, COLORS.jackson, false, true),
+      mkDataset('Arcadia South WattTime MOER', Array(40).fill(DATA.arcadia.moer_rate), COLORS.arcadia, false, false),
+      mkDataset('Arcadia South TCR LMER (MWh)', DATA.arcadia.lmer_mwh, COLORS.arcadia, false, true)
     ]
   },
   options: lineOpts('t CO₂/MWh')
