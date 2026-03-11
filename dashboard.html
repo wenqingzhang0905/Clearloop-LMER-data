@@ -193,7 +193,7 @@
 <header>
   <div>
     <h1>Project Impact Comparison Dashboard</h1>
-    <p>Solar carbon reduction analysis — WattTime MOER vs TCR LMER methodology</p>
+    <p>Solar carbon reduction analysis — WattTime MOER vs TCR LMER (MWh) methodology</p>
   </div>
   <span class="badge">40-year projection · 3 projects</span>
 </header>
@@ -222,9 +222,9 @@
           <div class="sub">WattTime method</div>
         </div>
         <div class="stat">
-          <label>CO₂ Avoided (TCR)</label>
-          <div class="val bear-col">222,441 t</div>
-          <div class="sub">TCR LMER method</div>
+          <label>CO₂ Avoided (TCR MWh)</label>
+          <div class="val bear-col">172,661 t</div>
+          <div class="sub">TCR LMER (MWh) method</div>
         </div>
       </div>
     </div>
@@ -249,9 +249,9 @@
           <div class="sub">WattTime method</div>
         </div>
         <div class="stat">
-          <label>CO₂ Avoided (TCR)</label>
-          <div class="val jackson-col">51,447 t</div>
-          <div class="sub">TCR LMER method</div>
+          <label>CO₂ Avoided (TCR MWh)</label>
+          <div class="val jackson-col">42,130 t</div>
+          <div class="sub">TCR LMER (MWh) method</div>
         </div>
       </div>
     </div>
@@ -276,9 +276,9 @@
           <div class="sub">WattTime method</div>
         </div>
         <div class="stat">
-          <label>CO₂ Avoided (TCR)</label>
-          <div class="val arcadia-col">200,118 t</div>
-          <div class="sub">TCR LMER method</div>
+          <label>CO₂ Avoided (TCR MWh)</label>
+          <div class="val arcadia-col">160,062 t</div>
+          <div class="sub">TCR LMER (MWh) method</div>
         </div>
       </div>
     </div>
@@ -314,17 +314,17 @@
     <div class="chart-grid">
       <div class="chart-box">
         <h4>Annual CO₂ Avoided — Bear Creek</h4>
-        <p>WattTime MOER vs TCR LMER methodology comparison (metric tons CO₂)</p>
+        <p>WattTime MOER vs TCR LMER (MWh) methodology comparison (metric tons CO₂)</p>
         <canvas id="carbonBearChart"></canvas>
       </div>
       <div class="chart-box">
         <h4>Annual CO₂ Avoided — Jackson</h4>
-        <p>WattTime MOER vs TCR LMER methodology comparison (metric tons CO₂)</p>
+        <p>WattTime MOER vs TCR LMER (MWh) methodology comparison (metric tons CO₂)</p>
         <canvas id="carbonJacksonChart"></canvas>
       </div>
       <div class="chart-box">
         <h4>Annual CO₂ Avoided — Arcadia South</h4>
-        <p>WattTime MOER vs TCR LMER methodology comparison (metric tons CO₂)</p>
+        <p>WattTime MOER vs TCR LMER (MWh) methodology comparison (metric tons CO₂)</p>
         <canvas id="carbonArcadiaChart"></canvas>
       </div>
       <div class="chart-box">
@@ -339,8 +339,8 @@
   <div id="tab-lmer" class="tab-panel">
     <div class="chart-grid">
       <div class="chart-box">
-        <h4>TCR LMER Rate by Year (per MWh basis)</h4>
-        <p>Marginal emissions rate (metric tons CO₂/MWh) used for TCR carbon accounting</p>
+        <h4>Emission Rate Comparison: TCR LMER (MWh) vs WattTime MOER</h4>
+        <p>TCR LMER (MWh) rate (solid) vs WattTime MOER rate (dashed) in metric tons CO₂/MWh — same color per project</p>
         <canvas id="lmerRateChart"></canvas>
       </div>
       <div class="chart-box">
@@ -383,8 +383,8 @@
           <tr><td>Year 1 Generation (MWh/MW)</td><td>1,676</td><td>1,687</td><td>1,736</td></tr>
           <tr><td>Total MWh (40 yr)</td><td>383,731</td><td>90,403</td><td>398,917</td></tr>
           <tr><td>CO₂ Avoided — WattTime MOER (t)</td><td>211,034</td><td>47,228</td><td>246,044</td></tr>
-          <tr><td>CO₂ Avoided — TCR LMER/MW (t)</td><td>222,441</td><td>51,447</td><td>200,118</td></tr>
-          <tr><td>TCR vs MOER ratio</td><td>+5.4%</td><td>+8.9%</td><td>−18.7%</td></tr>
+          <tr><td>CO₂ Avoided — TCR LMER/MWh (t)</td><td>172,661</td><td>42,130</td><td>160,062</td></tr>
+          <tr><td>TCR vs MOER ratio</td><td>−18.2%</td><td>−10.8%</td><td>−34.9%</td></tr>
           <tr><td>Degradation Factor (annual)</td><td>0.3%</td><td>0.3%</td><td>0.3%</td></tr>
           <tr><td>Avg % Max Production (40 yr)</td><td>93.85%</td><td>93.85%</td><td>93.85%</td></tr>
         </tbody>
@@ -415,28 +415,31 @@ const COLORS = { bear: '#4f7df7', jackson: '#34d399', arcadia: '#f97316' };
 const DATA = {
   bear_creek: {
     name: 'Bear Creek', color: COLORS.bear,
+    moer_rate: 0.5500,  // constant WattTime MOER rate (t CO₂/MWh)
     mwh:       [10166,10135.5,10105.1,10074.78,10044.56,10014.42,9984.38,9954.43,9924.56,9894.79,9865.1,9835.51,9806.0,9776.58,9747.25,9718.01,9688.86,9659.79,9630.81,9601.92,9573.11,9544.4,9515.76,9487.22,9458.75,9430.38,9402.09,9373.88,9345.76,9317.72,9289.77,9261.9,9234.11,9206.41,9178.79,9151.25,9123.8,9096.43,9069.14,9041.93],
     pct_max:   [99.7,99.4,99.1,98.8,98.5,98.2,97.9,97.6,97.3,97.0,96.7,96.4,96.1,95.8,95.5,95.2,94.9,94.6,94.3,94.0,93.7,93.4,93.1,92.8,92.5,92.2,91.9,91.6,91.3,91.0,90.7,90.4,90.1,89.8,89.5,89.2,88.9,88.6,88.3,88.0],
     co2_moer:  [5590.83,5574.06,5557.34,5540.67,5524.05,5507.47,5490.95,5474.48,5458.06,5441.68,5425.36,5409.08,5392.85,5376.67,5360.54,5344.46,5328.43,5312.44,5296.51,5280.62,5264.77,5249.0,5233.23,5217.53,5201.88,5186.28,5170.72,5155.2,5139.74,5124.32,5108.95,5093.62,5078.34,5063.1,5047.91,5032.77,5017.67,5002.62,4987.61,4972.65],
-    co2_tcr:   [6496.55,6663.34,6775.42,6594.43,6420.67,6449.2,6476.43,6245.34,6363.38,6075.52,5710.72,5640.45,5502.19,5429.23,5280.27,5466.93,5244.92,5301.99,5296.41,5301.68,5244.74,5234.14,5224.97,5216.89,5209.68,5203.16,5197.22,5191.76,5186.71,5182.01,5177.62,5173.5,5169.62,5165.95,5162.47,5159.17,5156.02,5153.01,5150.13,5147.37],
+    co2_tcr:   [5342.16,5477.63,5575.34,5352.19,5194.52,5200.72,5207.30,5032.08,5112.02,4842.73,4512.91,4446.37,4326.59,4265.04,4123.92,4245.21,4059.06,4096.99,4092.49,4091.16,4061.27,4040.90,4021.72,4003.45,3985.92,3968.99,3952.57,3936.57,3920.94,3905.64,3890.63,3875.87,3861.34,3847.02,3832.90,3818.95,3805.17,3791.54,3778.06,3764.70],
     lmer_mwh:  [0.5255,0.5404,0.5517,0.5312,0.5171,0.5193,0.5215,0.5055,0.5151,0.4894,0.4575,0.4521,0.4412,0.4363,0.4231,0.4368,0.4189,0.4241,0.4249,0.4261,0.4242,0.4234,0.4226,0.422,0.4214,0.4209,0.4204,0.42,0.4195,0.4192,0.4188,0.4185,0.4182,0.4179,0.4176,0.4173,0.4171,0.4168,0.4166,0.4164],
     pct_lmer:  [100,102.57,104.29,101.51,98.83,99.27,99.69,96.13,97.95,93.52,87.9,86.82,84.69,83.57,81.28,84.15,80.73,81.61,81.53,81.61,80.73,80.57,80.43,80.3,80.19,80.09,79.97,79.92,79.84,79.77,79.7,79.63,79.57,79.52,79.46,79.41,79.37,79.32,79.27,79.23]
   },
   jackson: {
     name: 'Jackson', color: COLORS.jackson,
+    moer_rate: 0.5224,  // constant WattTime MOER rate (t CO₂/MWh)
     mwh:       [2395,2387.82,2380.65,2373.51,2366.39,2359.29,2352.21,2345.16,2338.12,2331.11,2324.11,2317.14,2310.19,2303.26,2296.35,2289.46,2282.59,2275.74,2268.92,2262.11,2255.32,2248.56,2241.81,2235.09,2228.38,2221.7,2215.03,2208.39,2201.76,2195.15,2188.57,2182.0,2175.46,2168.93,2162.42,2155.94,2149.47,2143.02,2136.59,2130.18],
     pct_max:   [99.7,99.4,99.1,98.8,98.5,98.2,97.9,97.6,97.3,97.0,96.7,96.4,96.1,95.8,95.5,95.2,94.9,94.6,94.3,94.0,93.7,93.4,93.1,92.8,92.5,92.2,91.9,91.6,91.3,91.0,90.7,90.4,90.1,89.8,89.5,89.2,88.9,88.6,88.3,88.0],
     co2_moer:  [1251.19,1247.43,1243.69,1239.96,1236.24,1232.53,1228.84,1225.15,1221.47,1217.81,1214.16,1210.51,1206.88,1203.26,1199.65,1196.05,1192.46,1188.89,1185.32,1181.76,1178.22,1174.68,1171.16,1167.65,1164.14,1160.65,1157.17,1153.7,1150.24,1146.79,1143.35,1139.92,1136.5,1133.09,1129.69,1126.3,1122.92,1119.55,1116.19,1112.84],
-    co2_tcr:   [1534.49,1540.04,1515.35,1509.32,1525.32,1451.05,1469.81,1412.99,1411.03,1364.79,1302.6,1296.56,1273.35,1243.41,1222.55,1273.72,1219.08,1236.93,1232.16,1237.47,1223.03,1220.48,1218.28,1216.34,1214.6,1213.04,1211.61,1210.3,1209.09,1207.96,1206.9,1205.92,1204.98,1204.1,1203.27,1202.47,1201.72,1200.99,1200.3,1199.64],
+    co2_tcr:   [1348.83,1349.96,1331.10,1268.83,1277.74,1211.67,1223.45,1176.89,1172.06,1126.78,1070.08,1063.96,1043.09,1017.13,995.03,1032.25,984.93,996.91,992.49,994.54,1012.35,1007.21,1002.38,997.78,993.37,989.11,984.98,980.97,977.04,973.20,969.44,965.74,962.09,958.51,954.97,951.47,948.02,944.61,941.23,937.89],
     lmer_mwh:  [0.5632,0.5654,0.5591,0.5346,0.54,0.5136,0.5201,0.5018,0.5013,0.4834,0.4604,0.4592,0.4515,0.4416,0.4333,0.4509,0.4315,0.4381,0.4374,0.4397,0.4489,0.4479,0.4471,0.4464,0.4458,0.4452,0.4447,0.4442,0.4438,0.4433,0.443,0.4426,0.4422,0.4419,0.4416,0.4413,0.441,0.4408,0.4405,0.4403],
     pct_lmer:  [100,100.36,98.75,98.36,99.4,94.56,95.78,92.08,91.95,88.94,84.88,84.49,82.98,81.03,79.67,83.01,79.45,80.61,80.3,80.64,79.7,79.54,78.93,79.27,79.15,79.05,78.96,78.87,78.79,78.72,78.65,78.59,78.52,78.47,78.41,78.37,78.31,78.27,78.22,78.18]
   },
   arcadia: {
     name: 'Arcadia South', color: COLORS.arcadia,
+    moer_rate: 0.6168,  // constant WattTime MOER rate (t CO₂/MWh)
     mwh:       [10568.32,10536.62,10505.01,10473.49,10442.07,10410.74,10379.51,10348.37,10317.33,10286.38,10255.52,10224.75,10194.08,10163.49,10133.0,10102.6,10072.3,10042.08,10011.95,9981.92,9951.97,9922.12,9892.35,9862.67,9833.08,9803.58,9774.17,9744.85,9715.62,9686.47,9657.41,9628.44,9599.55,9570.75,9542.04,9513.42,9484.88,9456.42,9428.05,9399.77],
     pct_max:   [99.7,99.4,99.1,98.8,98.5,98.2,97.9,97.6,97.3,97.0,96.7,96.4,96.1,95.8,95.5,95.2,94.9,94.6,94.3,94.0,93.7,93.4,93.1,92.8,92.5,92.2,91.9,91.6,91.3,91.0,90.7,90.4,90.1,89.8,89.5,89.2,88.9,88.6,88.3,88.0],
     co2_moer:  [6518.33,6498.77,6479.28,6459.84,6440.46,6421.14,6401.88,6382.67,6363.52,6344.43,6325.4,6306.42,6287.5,6268.64,6249.83,6231.08,6212.39,6193.75,6175.17,6156.65,6138.18,6119.76,6101.4,6083.1,6064.85,6046.66,6028.52,6010.43,5992.4,5974.42,5956.5,5938.63,5920.81,5903.05,5885.34,5867.69,5850.08,5832.53,5815.03,5797.59],
-    co2_tcr:   [6257.43,6338.47,6169.26,5756.94,5550.4,5153.47,4644.72,4516.16,4954.68,4852.3,4905.24,4592.54,4517.47,4584.53,4679.38,4763.6,4840.56,4757.43,4887.89,4887.79,4890.05,4896.3,4901.72,4906.51,4910.79,4914.67,4918.21,4921.47,4924.5,4927.31,4929.95,4932.42,4934.76,4936.97,4939.07,4941.06,4942.97,4944.79,4946.53,4948.21],
+    co2_tcr:   [5297.71,5323.55,5113.18,4773.35,4602.87,4290.49,3890.51,3769.21,4075.69,4008.76,4025.36,3773.88,3752.48,3759.61,3823.79,3874.01,3933.83,3837.67,3911.45,3891.20,3898.61,3891.88,3884.50,3876.62,3868.37,3859.81,3851.01,3842.00,3832.83,3823.51,3814.08,3804.55,3794.93,3785.24,3775.49,3765.68,3755.83,3745.95,3736.02,3726.08],
     lmer_mwh:  [0.5013,0.5052,0.4867,0.4558,0.4408,0.4121,0.3748,0.3642,0.395,0.3897,0.3925,0.3691,0.3681,0.3699,0.3774,0.3835,0.3906,0.3822,0.3907,0.3898,0.3917,0.3922,0.3927,0.3931,0.3934,0.3937,0.394,0.3943,0.3945,0.3947,0.3949,0.3951,0.3953,0.3955,0.3957,0.3958,0.396,0.3961,0.3963,0.3964],
     pct_lmer:  [100,100.78,98.59,92.0,87.87,82.36,74.22,72.17,79.18,77.55,78.39,73.39,72.19,73.27,74.78,76.13,77.36,76.03,78.11,78.11,78.15,78.25,78.33,78.41,78.47,78.54,78.6,78.65,78.7,78.74,78.79,78.83,78.86,78.9,78.93,78.96,78.99,79.02,79.05,79.07]
   }
@@ -532,7 +535,7 @@ function makeCarbonChart(id, proj) {
       labels: YEARS,
       datasets:[
         mkDataset('WattTime MOER', proj.co2_moer, proj.color, false, false),
-        mkDataset('TCR LMER', proj.co2_tcr, proj.color, false, true)
+        mkDataset('TCR LMER (MWh)', proj.co2_tcr, proj.color, false, true)
       ]
     },
     options: lineOpts('t CO₂ avoided')
@@ -557,15 +560,18 @@ new Chart(document.getElementById('carbonCumChart'), {
   options: lineOpts('Cumulative kt CO₂')
 });
 
-// ── CHART 7: LMER Rate ───────────────────────────────────────────────────────
+// ── CHART 7: LMER Rate vs MOER Rate ──────────────────────────────────────────
 new Chart(document.getElementById('lmerRateChart'), {
   type:'line',
   data:{
     labels: YEARS,
     datasets:[
-      mkDataset('Bear Creek (SOCO)', DATA.bear_creek.lmer_mwh, COLORS.bear),
-      mkDataset('Jackson (TVA)', DATA.jackson.lmer_mwh, COLORS.jackson),
-      mkDataset('Arcadia South (MISO)', DATA.arcadia.lmer_mwh, COLORS.arcadia)
+      mkDataset('Bear Creek TCR LMER (MWh)', DATA.bear_creek.lmer_mwh, COLORS.bear, false, false),
+      mkDataset('Bear Creek WattTime MOER', Array(40).fill(DATA.bear_creek.moer_rate), COLORS.bear, false, true),
+      mkDataset('Jackson TCR LMER (MWh)', DATA.jackson.lmer_mwh, COLORS.jackson, false, false),
+      mkDataset('Jackson WattTime MOER', Array(40).fill(DATA.jackson.moer_rate), COLORS.jackson, false, true),
+      mkDataset('Arcadia South TCR LMER (MWh)', DATA.arcadia.lmer_mwh, COLORS.arcadia, false, false),
+      mkDataset('Arcadia South WattTime MOER', Array(40).fill(DATA.arcadia.moer_rate), COLORS.arcadia, false, true)
     ]
   },
   options: lineOpts('t CO₂/MWh')
@@ -645,7 +651,7 @@ function switchTab(name) {
 }
 
 // ── Annual Table ─────────────────────────────────────────────────────────────
-const TABLE_HEADERS = ['Year','MWh Produced','% Max Prod','CO₂ MOER (t)','CO₂ TCR/MW (t)','LMER (t CO₂/MWh)','% Initial LMER'];
+const TABLE_HEADERS = ['Year','MWh Produced','% Max Prod','CO₂ MOER (t)','CO₂ TCR/MWh (t)','LMER (t CO₂/MWh)','% Initial LMER'];
 const TABLE_KEYS    = ['mwh','pct_max','co2_moer','co2_tcr','lmer_mwh','pct_lmer'];
 
 function showTable(key) {
