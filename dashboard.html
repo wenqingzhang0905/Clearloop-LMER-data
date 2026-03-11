@@ -335,7 +335,7 @@
     <div class="chart-grid">
       <div class="chart-box">
         <h4>Emission Rate Comparison: TCR LMER (MWh) vs WattTime MOER</h4>
-        <p>TCR LMER (MWh) rate (solid) vs WattTime MOER rate (dashed) in metric tons CO₂/MWh — same color per project</p>
+        <p>WattTime MOER (solid gray) vs TCR LMER MWh rate (dotted, project color) in metric tons CO₂/MWh</p>
         <canvas id="lmerRateChart"></canvas>
       </div>
       <div class="chart-box">
@@ -405,7 +405,7 @@
 <script>
 // ── DATA ──────────────────────────────────────────────────────────────────
 const YEARS = Array.from({length:40}, (_,i)=>i+1);
-const COLORS = { bear: '#4f7df7', jackson: '#34d399', arcadia: '#f97316' };
+const COLORS = { bear: '#4f7df7', jackson: '#34d399', arcadia: '#f97316', moer: '#94a3b8' };
 
 const DATA = {
   bear_creek: {
@@ -516,7 +516,7 @@ function makeCarbonChart(id, proj) {
     data:{
       labels: YEARS,
       datasets:[
-        mkDataset('WattTime MOER', proj.co2_moer, proj.color, false, false),
+        mkDataset('WattTime MOER', proj.co2_moer, COLORS.moer, false, false),
         mkDataset('TCR LMER (MWh)', proj.co2_tcr, proj.color, false, true)
       ]
     },
@@ -548,11 +548,11 @@ new Chart(document.getElementById('lmerRateChart'), {
   data:{
     labels: YEARS,
     datasets:[
-      mkDataset('Bear Creek WattTime MOER', Array(40).fill(DATA.bear_creek.moer_rate), COLORS.bear, false, false),
+      mkDataset('Bear Creek WattTime MOER', Array(40).fill(DATA.bear_creek.moer_rate), COLORS.moer, false, false),
       mkDataset('Bear Creek TCR LMER (MWh)', DATA.bear_creek.lmer_mwh, COLORS.bear, false, true),
-      mkDataset('Jackson WattTime MOER', Array(40).fill(DATA.jackson.moer_rate), COLORS.jackson, false, false),
+      mkDataset('Jackson WattTime MOER', Array(40).fill(DATA.jackson.moer_rate), COLORS.moer, false, false),
       mkDataset('Jackson TCR LMER (MWh)', DATA.jackson.lmer_mwh, COLORS.jackson, false, true),
-      mkDataset('Arcadia South WattTime MOER', Array(40).fill(DATA.arcadia.moer_rate), COLORS.arcadia, false, false),
+      mkDataset('Arcadia South WattTime MOER', Array(40).fill(DATA.arcadia.moer_rate), COLORS.moer, false, false),
       mkDataset('Arcadia South TCR LMER (MWh)', DATA.arcadia.lmer_mwh, COLORS.arcadia, false, true)
     ]
   },
